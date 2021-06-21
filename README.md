@@ -1,2 +1,2 @@
-# Windows_Time_Server
+# Windows Time Server
 Configure Windows Time Server
