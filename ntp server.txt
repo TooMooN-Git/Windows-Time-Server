@@ -39,7 +39,7 @@ rem Совместимость сервера времени и клиентов
 reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpClient /v CompatibilityFlags /t REG_DWORD /d 8 /f
 
 rem Задание списка внешних источников для синхронизации.
-w32tm /config /manualpeerlist:"0.ru.pool.ntp.org,0x1 1.ru.pool.ntp.org,0x1 1.europe.pool.ntp.org,0x1 2.europe.pool.ntp.org,0x1 3.ru.pool.ntp.org,0x2 3.europe.pool.ntp.org,0x2"
+w32tm /config /manualpeerlist:"time.cloudflare.com,0x1 europe.pool.ntp.org,0x1 time-b-g.nist.gov,0x2 time.google.com,0x2"
 
 rem Задание интервала синхронизации с внешним источником.
 reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Config /v MaxPollInterval /t REG_DWORD /d 10 /f
