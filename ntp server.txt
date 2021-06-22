@@ -38,7 +38,6 @@ reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32time\Parameters 
 rem Совместимость сервера времени и клиентов.
 reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpClient /v CompatibilityFlags /t REG_DWORD /d 8 /f
 
-
 rem Задание списка внешних источников для синхронизации.
 w32tm /config /manualpeerlist:"0.ru.pool.ntp.org,0x1 1.ru.pool.ntp.org,0x1 1.europe.pool.ntp.org,0x1 2.europe.pool.ntp.org,0x1 3.ru.pool.ntp.org,0x2 3.europe.pool.ntp.org,0x2"
 
@@ -78,3 +77,70 @@ w32tm /query /peers
 W32tm /query /configuration
 
 rem 6. Примерная картина после перезагрузки.
+Microsoft Windows [Version 6.3.9600]
+(c) 2013 Microsoft Corporation. All rights reserved.
+
+C:\Users\Administrator>sc query "w32time"
+
+SERVICE_NAME: w32time
+        TYPE               : 20  WIN32_SHARE_PROCESS
+        STATE              : 4  RUNNING
+                                (STOPPABLE, NOT_PAUSABLE, AC
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x0
+        WAIT_HINT          : 0x0
+
+C:\Users\Administrator>w32tm /query /peers
+#Peers: 6
+
+Peer: 3.europe.pool.ntp.org,0x2
+State: Active
+Time Remaining: 625.2724541s
+Mode: 1 (Symmetric Active)
+Stratum: 1 (primary reference - syncd by radio clock)
+PeerPoll Interval: 17 (out of valid range)
+HostPoll Interval: 10 (1024s)
+
+Peer: 3.ru.pool.ntp.org,0x2
+State: Active
+Time Remaining: 625.2724541s
+Mode: 1 (Symmetric Active)
+Stratum: 2 (secondary reference - syncd by (S)NTP)
+PeerPoll Interval: 17 (out of valid range)
+HostPoll Interval: 10 (1024s)
+
+Peer: 0.ru.pool.ntp.org,0x1
+State: Pending
+Time Remaining: 1165.2436349s
+Mode: 0 (reserved)
+Stratum: 0 (unspecified)
+PeerPoll Interval: 0 (unspecified)
+HostPoll Interval: 0 (unspecified)
+
+Peer: 1.europe.pool.ntp.org,0x1
+State: Pending
+Time Remaining: 1165.2436349s
+Mode: 0 (reserved)
+Stratum: 0 (unspecified)
+PeerPoll Interval: 0 (unspecified)
+HostPoll Interval: 0 (unspecified)
+
+Peer: 1.ru.pool.ntp.org,0x1
+State: Pending
+Time Remaining: 1165.2436349s
+Mode: 0 (reserved)
+Stratum: 0 (unspecified)
+PeerPoll Interval: 0 (unspecified)
+HostPoll Interval: 0 (unspecified)
+
+Peer: 2.europe.pool.ntp.org,0x1
+State: Pending
+Time Remaining: 1165.2436349s
+Mode: 0 (reserved)
+Stratum: 0 (unspecified)
+PeerPoll Interval: 0 (unspecified)
+HostPoll Interval: 0 (unspecified)
+
+rem Eventlog:
+The time service is now synchronizing the system time with the time source 3.europe.pool.ntp.org,0x2 (ntp.m|0x2|0.0.0.0:123->131.188.3.222:123).
