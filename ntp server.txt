@@ -1,0 +1,80 @@
+rem Ручная настройка сервера времени на синхронизацию с внешним источником.
+rem Подготовительные шаги.
+
+rem 1. Подготовка сервера. Удаляем службу времени и перезагружаем сервер.
+sc config "w32time" type= own
+net stop "w32time"
+w32tm /unregister
+w32tm /unregister
+shutdown -r -t 10 -f
+
+rem 2. Подготовка службы времени. Регистрируем службу, мотрим что она появилась и перезагружаем сервер.
+start "" /b /wait regsvr32 /u w32time.dll
+start "" /b /wait w32tm /register
+sc query "w32time"
+shutdown -r -t 10 -f
+
+rem 3. Настройка службы времени на синхронизацию с внешним источником.
+rem 3.1 Проверяем, что служба времени запускается и останавливается без ошибок.
+net start "w32time"
+sc query "w32time"
+
+rem В логах не должно быть ошибки с дублирующимся PID'ом, если такое есть, тогда нужно:
+sc config "w32time" type= own
+rem Перезагрузить сервер и еще раз выполнить пункт 3.1
+
+rem 3.2
+rem Включение синхронизации внутренних часов с внешним источником.
+w32tm /config /syncfromflags:manual
+
+rem Объявление NTP-сервера в качестве надежного.			
+w32tm /config /reliable:yes
+
+rem Делаем сервер сервером времени. Объявляем себя в качесве сервера времени.
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpServer /v Enabled /t REG_DWORD /d 1 /f
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Config /v AnnounceFlags /t REG_DWORD /d 5 /f
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32time\Parameters /v Type /t REG_SZ /d NTP /f
+
+rem Совместимость сервера времени и клиентов.
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpClient /v CompatibilityFlags /t REG_DWORD /d 8 /f
+
+
+rem Задание списка внешних источников для синхронизации.
+w32tm /config /manualpeerlist:"0.ru.pool.ntp.org,0x1 1.ru.pool.ntp.org,0x1 1.europe.pool.ntp.org,0x1 2.europe.pool.ntp.org,0x1 3.ru.pool.ntp.org,0x2 3.europe.pool.ntp.org,0x2"
+
+rem Задание интервала синхронизации с внешним источником.
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Config /v MaxPollInterval /t REG_DWORD /d 10 /f
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Config /v MaxAllowedPhaseOffset /t REG_DWORD /d 300 /f
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpClient /v SpecialPollInterval /t REG_DWORD /d 1800 /f
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpClient /v SpecialInterval /t REG_DWORD /d 1 /f
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Config /v FrequencyCorrectRate /t REG_DWORD /d 4 /f
+
+rem Установка минимальной положительной и отрицательной коррекции.
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Config /v MaxPosPhaseCorrection /t REG_DWORD /d 4294967295 /f
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Config /v MaxNegPhaseCorrection /t REG_DWORD /d 4294967295 /f
+
+rem Применение внесенных в конфигурацию службы времени изменений.
+w32tm /config /update
+
+rem Перезапускам службу.
+net stop "w32time"
+net start "w32time"
+
+rem Принудительная синхронизация от источника.
+w32tm /resync /rediscover
+w32tm /resync /rediscover
+w32tm /resync /rediscover
+
+rem Отображение текущих источников синхронизации и их статуса.
+w32tm /query /peers
+
+rem 4. Устанавливаем отложенный запуск службы. 
+sc config "w32time" start= delayed-auto
+sc config "w32time" depend= "Netman"
+
+rem 5. Перезагружаемся и смотрим статус службы и ее настройки.
+sc query "w32time"
+w32tm /query /peers
+W32tm /query /configuration
+
+rem 6. Примерная картина после перезагрузки.
